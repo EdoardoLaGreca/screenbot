@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"error"
+	"bytes"
 	"image"
 	"image/jpeg"
-	"bytes"
+	"runtime"
 	"net/http"
 	"github.com/kbinani/screenshot"
 )
@@ -14,6 +16,8 @@ func main() {
 	var screenArea image.Rectangle
 	var prevImg, erasedImg *image.RGBA
 	remoteUrl := "" // Fill
+	runtime.GOMAXPROCS(8) // Tune this value
+	
 
 	fmt.Print("Enter the coordinates of the rectangle to observe as\n" +
 		" <x1> <y1> <x2> <y2>\n" +
@@ -85,12 +89,61 @@ func imgsAreEqual(img1 *image.RGBA, img2 *image.RGBA, rectNum uint) bool {
 	
 	areImgsEqual = true
 	
+	// Signal-only channel to stop goroutines whenever one of them finds a
+	// difference
+	stopSig := make(chan struct{})
+	defer close(stopSig)
+	
+	// Error signal to comunicate that an error happened in a goroutine
+	errSig := make(chan error)
+	defer close(errSig)
+	
 	// Launch a number of goroutines equal to the number of rectangles
 	for i = 0; i < rectNum; i++ {
-		go
+		go checkRect(stopSig, errSig, img1Div[i], img2Div[i])
 	}
 	
 	return areImagesEqual
+}
+
+// Check rectangles (in the same position) of two images
+func checkRect(stopCh chan struct{}, errCh chan error, rect1 image.Image, rect2 image.Image) {
+	r1Bounds = rect1.Bounds()
+	r2Bounds = rect2.Bounds()
+
+	// Rectangles must have the same size and the same position
+	if r1Bounds != r2Bounds {
+		errCh <- error.New("Rectangles differ by size and/or position")
+	}
+
+	isStop := false
+
+	for x = r1Bounds.Min.X; x < r1Bounds.Max.X; x++ {
+		for y = r1Bounds.Min.Y; y < r1Bounds.Max.Y; y++ {
+			// Stop if a stop signal is received, otherwise continue
+			select {
+			case <-stopCh:
+				fallthrough
+			case <-errCh
+				isStop = true
+			default:
+			}
+
+			if rect1.At(x, y) != rect2.At(x, y) {
+				stopCh <- struct{}{}
+			}
+
+			if isStop {
+				// Break inner loop
+				break
+			}
+		}
+
+		if isStop {
+			// Break outer loop
+			break
+		}
+	}
 }
 
 // Return true if the board has been erased
