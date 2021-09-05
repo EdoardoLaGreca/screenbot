@@ -56,10 +56,7 @@ func main() {
 			prevImg = currImg
 			erasedImg = currImg
 			firstImg = false
-		}
-
-		if !analysis.AreImgsEqual(prevImg, currImg) && !firstImg {
-			fmt.Println("DEBUG 1\nimg", currImg)
+		} else if !analysis.AreImgsEqual(prevImg, currImg) {
 			if analysis.BoardIsErased(currImg, erasedImg) {
 				err := sendImg(remoteUrl, prevImg)
 
