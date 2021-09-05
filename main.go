@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"net/http"
 	"github.com/EdoardoLaGreca/screenbot/analysis"
+	"github.com/EdoardoLaGreca/screenbot/network"
 	"github.com/kbinani/screenshot"
 )
 
@@ -58,12 +59,14 @@ func main() {
 			firstImg = false
 		} else if !analysis.AreImgsEqual(prevImg, currImg) {
 			if analysis.BoardIsErased(currImg, erasedImg) {
-				err := sendImg(remoteUrl, prevImg)
+				err := network.SendImg(remoteUrl, prevImg)
 
 				if err != nil {
 					log.Println("Unable to send the image, error:", err)
+
 					// Save the image as local file and send it once there
 					// will be a connection again
+					
 				} else {
 					log.Println("Image sent!")
 				}
@@ -74,20 +77,4 @@ func main() {
 
 		time.Sleep(1*time.Second)
 	}
-}
-
-// Send image to Discord bot
-func sendImg(url string, img *image.RGBA) error {
-	// Encode the image into JPEG and send it into a buffer
-	var buffer bytes.Buffer
-	err := jpeg.Encode(&buffer, img, nil)
-
-	if err != nil {
-		return err
-	}
-
-	// Send the image through POST from the buffer
-	_, err = http.Post(url, "image/jpeg", &buffer)
-
-	return err
 }
