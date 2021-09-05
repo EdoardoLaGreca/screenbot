@@ -1,4 +1,5 @@
 #! /bin/sh
 
-go get github.com/kbinani/screenshot
+go get ./...
+
 go build -o target/screenbot .
