@@ -36,29 +36,56 @@ func storeImg(img image.Image, name string) error {
 // Send all the images that have been previously stored and delete them once
 // they got sent. If it's not possible to send them they will be kept stored.
 func sendStored() error {
-	entries, err := os.Open("offline").ReadDir(0)
+	// Open directory
+	dir, err := os.Open("offline")
 	if err != nil {
 		return err
 	}
 
-	for _, v := range entries {
-		
+	// Read all entries
+	entries, err := dir.ReadDir(0)
+	if err != nil {
+		return err
 	}
+
+	for _, en := range entries {
+		if !en.IsDir() {
+			name := en.Name()
+
+			if len(name) > 5 && (name[:4] == ".jpg" || name[:5] == ".jpeg") {
+				path := "offline" + name
+
+				file, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+
+				image, err := jpeg.Decode(file)
+				if err != nil {
+					return err
+				}
+
+				SendImg(path, image)
+			}
+		}
+	}
+
+	return nil
 }
 
 
 // Send image to Discord bot
-func SendImg(url string, img *image.RGBA) error {
+func SendImg(url string, img image.Image) error {
 	// Encode the image into JPEG and send it into a buffer
 	var buffer bytes.Buffer
-	err := jpeg.Encode(&buffer, img, nil)
+	errJpeg := jpeg.Encode(&buffer, img, nil)
 
-	if err != nil {
-		return err
+	if errJpeg != nil {
+		return errJpeg
 	}
 
 	// Send the image through POST from the buffer
-	_, err = http.Post(url, "image/jpeg", &buffer)
+	_, errHTTP := http.Post(url, "image/jpeg", &buffer)
 
-	return err
+	return errHTTP
 }
