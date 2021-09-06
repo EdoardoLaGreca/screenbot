@@ -1,7 +1,6 @@
 package analysis
 
 import (
-	"fmt"
 	"sync"
 	"image"
 	"context"
