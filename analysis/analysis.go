@@ -33,7 +33,7 @@ func AreImgsEqual(img1, img2 *image.RGBA) bool {
 	// Launch a number of goroutines equal to the number of rectangles
 	for i := 0; i < rectNum; i++ {
 		wg.Add(1)
-		go func(img1, img2 image.Image) {
+		go func(img1, img2 *image.RGBA) {
 			defer wg.Done()
 			checkRect(ctx, cancel, resCh, img1, img2)
 		}(img1Div[i], img2Div[i])
@@ -56,7 +56,7 @@ func AreImgsEqual(img1, img2 *image.RGBA) bool {
 }
 
 // Check rectangles (in the same position) of two images asynchronously
-func checkRect(ctx context.Context, cancel func(), resCh chan bool, rect1, rect2 image.Image) {
+func checkRect(ctx context.Context, cancel func(), resCh chan bool, rect1, rect2 *image.RGBA) {
 	r1Bounds := rect1.Bounds()
 
 	for x := r1Bounds.Min.X; x < r1Bounds.Max.X; x++ {
@@ -79,10 +79,10 @@ func checkRect(ctx context.Context, cancel func(), resCh chan bool, rect1, rect2
 }
 
 // Divide two images in a certain amount of parts
-func divideImgs(img1, img2 *image.RGBA, parts uint) ([]image.Image, []image.Image) {
+func divideImgs(img1, img2 *image.RGBA, parts uint) ([]*image.RGBA, []*image.RGBA) {
 	// Images divided into rectangles
-	img1Div := make([]image.Image, parts)
-	img2Div := make([]image.Image, parts)
+	img1Div := make([]*image.RGBA, parts)
+	img2Div := make([]*image.RGBA, parts)
 
 	// Height and width of each rectangle
 	// Rectangulars have the same height as the image and their width is divided
@@ -102,8 +102,8 @@ func divideImgs(img1, img2 *image.RGBA, parts uint) ([]image.Image, []image.Imag
 		}
 
 		// Get sub-images and add them
-		subImg1 := img1.SubImage(subArea)
-		subImg2 := img2.SubImage(subArea)
+		subImg1 := img1.SubImage(subArea).(*image.RGBA)
+		subImg2 := img2.SubImage(subArea).(*image.RGBA)
 		img1Div[i] = subImg1
 		img2Div[i] = subImg2
 	}
