@@ -2,13 +2,12 @@ package network
 
 import (
 	"os"
-	//"io"
+	"io"
 	"fmt"
 	"net"
 	"bytes"
 	"image"
 	"image/png"
-	"encoding/binary"
 )
 
 // Store image in case the remote host is (temporarily) offline. Make sure the
@@ -97,26 +96,23 @@ func SendImg(url string, img *image.RGBA) error {
 	// Secret word to check packets
 	fmt.Fprintf(conn, "BOT")
 
-	// Image length
-	length := 0x7F // len(img.Pix)
+	// Image length as uint64 and encoded into bytes (big-endian)
+	length := uint64(len(img.Pix))
+	var lenEnc [8]byte
 
-	buffer.Reset()
-	lenEncLen := binary.Size(length)
-	binary.Write(&buffer, binary.BigEndian, length)
+	// Translate the image length into an array of 8 bytes, starting from the
+	// most significant byte
+	for i := 0; i < 8; i++ {
+		// i-th byte counting from right
+		b := byte((length & (0xFF << (i*8))) >> (i*8))
 
-	// Length of the image encoded + padding at the end
-	lenEnc, _ := append(buffer.ReadBytes(lenEncLen), [8-lenEncLen]byte{0}...)
+		lenEnc[8-i-1] = b
+	}
 	
-	fmt.Println("before:", lenEnc) //DEBUG
-
-	// Add padding to the beginning
-	lenEnc = append(lenEnc[lenEncLen:], lenEnc[:lenEncLen]...)
-	fmt.Println("after: ", lenEnc) //DEBUG
-
 	// Send length
-	fmt.Fprintf(conn, "%s", string(lenEnc))
+	fmt.Fprintf(conn, "%s", string(lenEnc[:]))
 
-	//io.Copy(conn, &buffer)
+	io.Copy(conn, &buffer)
 
 	return nil
 }
