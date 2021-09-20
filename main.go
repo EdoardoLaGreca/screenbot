@@ -1,5 +1,5 @@
-
 package main
+
 import (
 	"os"
 	"fmt"
@@ -16,7 +16,7 @@ import (
 func main() {
 	// Check if URL is provided
 	if len(os.Args[1:]) < 1 {
-		fmt.Println("ERROR: No URL provided.\nUsage: ./screenbot <URL>")
+		fmt.Println("ERROR: No URL provided.\nUsage: ./screenbot <IP>:<port>")
 		return
 	}
 
