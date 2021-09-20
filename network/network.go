@@ -2,10 +2,13 @@ package network
 
 import (
 	"os"
-	"net/http"
+	//"io"
+	"fmt"
+	"net"
 	"bytes"
 	"image"
 	"image/png"
+	"encoding/binary"
 )
 
 // Store image in case the remote host is (temporarily) offline. Make sure the
@@ -55,12 +58,12 @@ func SendStored() error {
 					return err
 				}
 
-				image, err := png.Decode(file)
+				img, err := png.Decode(file)
 				if err != nil {
 					return err
 				}
 
-				err = SendImg(path, image)
+				err = SendImg(path, img.(*image.RGBA))
 				if err != nil {
 					// The connection has been lost again, stop sending images
 					break
@@ -77,7 +80,7 @@ func SendStored() error {
 
 
 // Send image to Discord bot
-func SendImg(url string, img image.Image) error {
+func SendImg(url string, img *image.RGBA) error {
 	// Encode the image into JPEG and send it into a buffer
 	var buffer bytes.Buffer
 	errJpeg := png.Encode(&buffer, img)
@@ -86,8 +89,34 @@ func SendImg(url string, img image.Image) error {
 		return errJpeg
 	}
 
-	// Send the image through POST from the buffer
-	_, errHTTP := http.Post(url, "image/png", &buffer)
+	conn, err := net.Dial("tcp", url)
+	if err != nil {
+		return err
+	}
 
-	return errHTTP
+	// Secret word to check packets
+	fmt.Fprintf(conn, "BOT")
+
+	// Image length
+	length := 0x7F // len(img.Pix)
+
+	buffer.Reset()
+	lenEncLen := binary.Size(length)
+	binary.Write(&buffer, binary.BigEndian, length)
+
+	// Length of the image encoded + padding at the end
+	lenEnc, _ := append(buffer.ReadBytes(lenEncLen), [8-lenEncLen]byte{0}...)
+	
+	fmt.Println("before:", lenEnc) //DEBUG
+
+	// Add padding to the beginning
+	lenEnc = append(lenEnc[lenEncLen:], lenEnc[:lenEncLen]...)
+	fmt.Println("after: ", lenEnc) //DEBUG
+
+	// Send length
+	fmt.Fprintf(conn, "%s", string(lenEnc))
+
+	//io.Copy(conn, &buffer)
+
+	return nil
 }
