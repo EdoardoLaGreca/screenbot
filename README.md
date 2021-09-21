@@ -1,5 +1,5 @@
 # screenbot
-A simple program that takes screenshots of a whiteboard/blackboard and sends them to a Discord bot via HTTP whenever the board gets erased.
+A simple program that takes screenshots of a whiteboard/blackboard and sends them to a Discord bot via TCP whenever the board gets erased.
 
 ## Build & run
 
