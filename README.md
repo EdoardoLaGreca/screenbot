@@ -17,10 +17,9 @@ Where:
 Dependencies:
  - [Golang](https://golang.org/)
 
-In order to build the program, run `build.sh` and it will do all the work.  
-To run it without building, use the command `go run .`
+In order to build the program, run `build.sh`, it will do all the work and place the binary file into the `target/` directory.
 
-Run the program as follows (once compiled):
+Run the program as follows (in the `target/` directory, once compiled):
 ```
 ./screenbot <IP>:<port>
 ```
@@ -31,3 +30,5 @@ When it starts, it will ask for the screen coordinates to take the images from, 
 xdotool getmouselocation
 ```
 Note that this tool works for sure on Unix-like systems running Xorg while I don't know if it works as well on Wayland or WSL.
+
+If the bot fails to send one or more images, it will store them in the `offline/` directory and send them once it will reach the remote host again. It also stores all the images (both sent and not sent) in the `imgs/` directory.
