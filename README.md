@@ -11,6 +11,6 @@ To run it without building, use the command `go run .`
 
 Run the program as follows (once compiled):
 ```
-./screenbot http://<address>:<port>
+./screenbot <IP>:<port>
 ```
 where `<address>` and `<port>` are the address and port of the server to send the images to.
