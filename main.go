@@ -95,9 +95,15 @@ func sendLoop(area image.Rectangle, prevImg, erasedImg *image.RGBA, url string) 
 	for {
 		currImg := getScreenshot(area)
 
+		if currImg == nil {
+			// Continue if an issue occurred while capturing the screenshot
+			time.Sleep(1*time.Second)
+			continue
+		}
+
 		log.Println("Screenshot captured")
 
-		if !analysis.AreImgsEqual(prevImg, currImg) {
+		if !analysis.AreImgsEqualConv(prevImg, currImg) {
 			if analysis.BoardIsErased(currImg, erasedImg) {
 				// Name for the stored image
 				timestamp := time.Now().Format(time.RFC822)
@@ -108,6 +114,7 @@ func sendLoop(area image.Rectangle, prevImg, erasedImg *image.RGBA, url string) 
 				
 				// Send image through a goroutine to avoid a blocking behaviour
 				go func(image *image.RGBA, filename string) {
+					log.Println("Sending image...")
 					err := network.SendImg(url, image)
 
 					if err != nil {
