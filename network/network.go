@@ -82,13 +82,14 @@ func SendStored() error {
 func SendImg(url string, img *image.RGBA) error {
 	// Encode the image into JPEG and send it into a buffer
 	var buffer bytes.Buffer
-	errJpeg := png.Encode(&buffer, img)
+	errPng := png.Encode(&buffer, img)
 
-	if errJpeg != nil {
-		return errJpeg
+	if errPng != nil {
+		return errPng
 	}
 
-	conn, err := net.Dial("tcp", url)
+	// Connection with timeout (5.000.000.000ns = 5s)
+	conn, err := net.DialTimeout("tcp", url, 5000000000)
 	if err != nil {
 		return err
 	}
