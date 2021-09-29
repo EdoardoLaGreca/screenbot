@@ -5,11 +5,25 @@ import (
 	"image"
 	"context"
 	"runtime"
+	"github.com/anthonynsimon/bild/convolution"
 )
 
 // Return true if the board has been erased
 func BoardIsErased(img *image.RGBA, erasedBoard *image.RGBA) bool {
 	return AreImgsEqual(img, erasedBoard)
+}
+
+// Convolve images before comparing them to discard image noise
+func AreImgsEqualConv(img1, img2 *image.RGBA) bool {
+	// Matrix for convolution
+	kernel := convolution.NewKernel(3, 3)
+	kernel.Matrix = []float64 {-1, -1, -1, -1, 8, -1, -1, -1, -1}
+
+	// Convolve the two images
+	img1Conv := convolution.Convolve(img1, kernel, nil)
+	img2Conv := convolution.Convolve(img2, kernel, nil)
+
+	return AreImgsEqual(img1Conv, img2Conv)
 }
 
 // Return true if the two images are equal
